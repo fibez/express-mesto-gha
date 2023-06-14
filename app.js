@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 });
 app.use(userRouter, cardRouter);
 app.use((req, res) => {
-  res.status(404).json({ message: 'Неправильный путь' });
+  res.status(400).json({ message: 'Неправильный путь' });
 });
 
 app.listen(PORT, () => {});

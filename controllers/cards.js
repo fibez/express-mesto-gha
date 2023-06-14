@@ -36,24 +36,19 @@ async function createCard(req, res) {
 async function deleteCard(req, res) {
   try {
     const { cardId } = req.params;
-    const userId = req.user._id;
 
-    const card = await Card.findById(cardId);
+    const card = await Card.findByIdAndDelete(cardId);
 
-    if (card.owner.toString() !== userId) {
-      return res.status(403).json({ message: 'Нельзя удалять чужие карточки' });
+    if (!card) {
+      return res.status(404).json({ message: 'Карточка не найдена' });
     }
 
-    const deletedCard = await Card.findByIdAndDelete(cardId);
+    // const deletedCard = await card.delete();
 
-    // if (!deletedCard) {
-    //   return res.status(400).json({ message: 'Карточка не найдена' });
-    // }
-
-    return res.json(deletedCard);
+    return res.json(card);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(404).json({ message: 'Некорректный идентификатор карточки' });
+      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
     }
     return res.status(500).json({ message: 'Произошла ошибка при удалении карточки' });
   }
@@ -71,7 +66,7 @@ async function likeCard(req, res) {
       return res.status(404).json({ message: 'Карточка не найдена' });
     }
 
-    return res.json(updatedCard);
+    return res.status(200).json(updatedCard);
   } catch (error) {
     if (error.name === 'CastError') {
       return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
