@@ -46,10 +46,14 @@ async function deleteCard(req, res) {
 
     const deletedCard = await Card.findByIdAndDelete(cardId);
 
+    // if (!deletedCard) {
+    //   return res.status(400).json({ message: 'Карточка не найдена' });
+    // }
+
     return res.json(deletedCard);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
+      return res.status(404).json({ message: 'Некорректный идентификатор карточки' });
     }
     return res.status(500).json({ message: 'Произошла ошибка при удалении карточки' });
   }
@@ -64,12 +68,15 @@ async function likeCard(req, res) {
     );
 
     if (!updatedCard) {
-      res.status(404).json({ message: 'Карточка не найдена' });
-    } else {
-      res.json(updatedCard);
+      return res.status(404).json({ message: 'Карточка не найдена' });
     }
+
+    return res.json(updatedCard);
   } catch (error) {
-    res.status(500).json({ message: 'Произошла ошибка при добавлении лайка карточке' });
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
+    }
+    return res.status(500).json({ message: 'Произошла ошибка при добавлении лайка карточке' });
   }
 }
 
@@ -82,12 +89,15 @@ async function dislikeCard(req, res) {
     );
 
     if (!updatedCard) {
-      res.status(404).json({ message: 'Карточка не найдена' });
-    } else {
-      res.json(updatedCard);
+      return res.status(404).json({ message: 'Карточка не найдена' });
     }
+
+    return res.json(updatedCard);
   } catch (error) {
-    res.status(500).json({ message: 'Произошла ошибка при удалении лайка с карточки' });
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
+    }
+    return res.status(500).json({ message: 'Произошла ошибка при удалении лайка с карточки' });
   }
 }
 

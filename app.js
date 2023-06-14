@@ -21,5 +21,8 @@ app.use((req, res, next) => {
   next();
 });
 app.use(userRouter, cardRouter);
+app.use((req, res) => {
+  res.status(404).json({ message: 'Неправильный путь' });
+});
 
 app.listen(PORT, () => {});

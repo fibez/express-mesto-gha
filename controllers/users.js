@@ -19,7 +19,7 @@ async function getuserBuId(req, res) {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: 'Пользователь не найден' });
+      return res.status(400).json({ message: 'Пользователь не найден' });
     }
     return res.json(user);
   } catch (error) {
