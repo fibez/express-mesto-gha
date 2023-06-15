@@ -1,11 +1,16 @@
 const Card = require('../models/card');
+const {
+  STATUS_BAD_REQUEST,
+  STATUS_NOT_FOUND,
+  STATUS_INTERNAL_SERVER_ERROR,
+} = require('../utils/constants');
 
 async function getAllCards(req, res) {
   try {
     const cards = await Card.find({});
     res.json(cards);
   } catch (error) {
-    res.status(500).json({ message: 'Произошла ошибка при получении карточек' });
+    res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при получении карточек' });
   }
 }
 
@@ -14,7 +19,7 @@ async function createCard(req, res) {
     const { name, link } = req.body;
 
     if (!name || !link) {
-      return res.status(400).json({ message: 'Одно из обязательных полей не заполнено' });
+      return res.status(STATUS_BAD_REQUEST).json({ message: 'Одно из обязательных полей не заполнено' });
     }
 
     const newCard = await Card.create({
@@ -26,10 +31,10 @@ async function createCard(req, res) {
     return res.json(newCard);
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Переданы некорректные данные' });
+      return res.status(STATUS_BAD_REQUEST).json({ message: 'Переданы некорректные данные' });
     }
 
-    return res.status(500).json({ message: 'Произошла ошибка при создании карточки' });
+    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при создании карточки' });
   }
 }
 
@@ -40,17 +45,15 @@ async function deleteCard(req, res) {
     const card = await Card.findByIdAndDelete(cardId);
 
     if (!card) {
-      return res.status(404).json({ message: 'Карточка не найдена' });
+      return res.status(STATUS_NOT_FOUND).json({ message: 'Карточка не найдена' });
     }
-
-    // const deletedCard = await card.delete();
 
     return res.json(card);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
+      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор карточки' });
     }
-    return res.status(500).json({ message: 'Произошла ошибка при удалении карточки' });
+    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при удалении карточки' });
   }
 }
 
@@ -63,15 +66,15 @@ async function likeCard(req, res) {
     );
 
     if (!updatedCard) {
-      return res.status(404).json({ message: 'Карточка не найдена' });
+      return res.status(STATUS_NOT_FOUND).json({ message: 'Карточка не найдена' });
     }
 
     return res.status(200).json(updatedCard);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
+      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор карточки' });
     }
-    return res.status(500).json({ message: 'Произошла ошибка при добавлении лайка карточке' });
+    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при добавлении лайка карточке' });
   }
 }
 
@@ -84,15 +87,15 @@ async function dislikeCard(req, res) {
     );
 
     if (!updatedCard) {
-      return res.status(404).json({ message: 'Карточка не найдена' });
+      return res.status(STATUS_NOT_FOUND).json({ message: 'Карточка не найдена' });
     }
 
     return res.json(updatedCard);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'Некорректный идентификатор карточки' });
+      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор карточки' });
     }
-    return res.status(500).json({ message: 'Произошла ошибка при удалении лайка с карточки' });
+    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при удалении лайка с карточки' });
   }
 }
 
