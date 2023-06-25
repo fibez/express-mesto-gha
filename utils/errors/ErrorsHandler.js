@@ -3,7 +3,7 @@ const ConflictError = require('./Conflict');
 const NotFoundError = require('./NotFound');
 const UnauthorizedError = require('./Unauthorized');
 
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res) {
   let statusCode = 500;
   let message = 'Произошла ошибка на сервере';
 
