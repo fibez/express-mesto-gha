@@ -1,25 +1,24 @@
 const Card = require('../models/card');
-const {
-  STATUS_BAD_REQUEST,
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
-} = require('../utils/constants');
 
-async function getAllCards(req, res) {
+const BadRequestError = require('../utils/errors/BadRequest');
+// const InternalServerError = require('../utils/errors/InternalServerError');
+const NotFoundError = require('../utils/errors/NotFound');
+
+async function getAllCards(req, res, next) {
   try {
     const cards = await Card.find({});
-    res.json(cards);
+    return res.json(cards);
   } catch (error) {
-    res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при получении карточек' });
+    return next(error);
   }
 }
 
-async function createCard(req, res) {
+async function createCard(req, res, next) {
   try {
     const { name, link } = req.body;
 
     if (!name || !link) {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Одно из обязательных полей не заполнено' });
+      throw new BadRequestError('Одно из обязательных полей не заполнено');
     }
 
     const newCard = await Card.create({
@@ -31,33 +30,39 @@ async function createCard(req, res) {
     return res.json(newCard);
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Переданы некорректные данные' });
+      throw new BadRequestError('Переданы некорректные данные');
     }
-
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при создании карточки' });
+    return next(error);
   }
 }
 
-async function deleteCard(req, res) {
+async function deleteCard(req, res, next) {
   try {
     const { cardId } = req.params;
+    const userId = req.user._id;
 
-    const card = await Card.findByIdAndDelete(cardId);
+    const card = await Card.findById(cardId);
 
     if (!card) {
-      return res.status(STATUS_NOT_FOUND).json({ message: 'Карточка не найдена' });
+      throw new NotFoundError('Карточка не найдена');
     }
+
+    if (card.owner.toString() !== userId) {
+      throw new NotFoundError('У вас нет прав для удаления этой карточки');
+    }
+
+    await card.remove();
 
     return res.json(card);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор карточки' });
+      throw new BadRequestError('Некорректный идентификатор карточки');
     }
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при удалении карточки' });
+    return next(error);
   }
 }
 
-async function likeCard(req, res) {
+async function likeCard(req, res, next) {
   try {
     const updatedCard = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -66,19 +71,19 @@ async function likeCard(req, res) {
     );
 
     if (!updatedCard) {
-      return res.status(STATUS_NOT_FOUND).json({ message: 'Карточка не найдена' });
+      throw new NotFoundError('Карточка не найдена');
     }
 
     return res.status(200).json(updatedCard);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор карточки' });
+      throw new BadRequestError('Некорректный идентификатор карточки');
     }
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при добавлении лайка карточке' });
+    return next(error);
   }
 }
 
-async function dislikeCard(req, res) {
+async function dislikeCard(req, res, next) {
   try {
     const updatedCard = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -87,15 +92,15 @@ async function dislikeCard(req, res) {
     );
 
     if (!updatedCard) {
-      return res.status(STATUS_NOT_FOUND).json({ message: 'Карточка не найдена' });
+      throw new NotFoundError('Карточка не найдена');
     }
 
     return res.json(updatedCard);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор карточки' });
+      throw new BadRequestError('Некорректный идентификатор карточки');
     }
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при удалении лайка с карточки' });
+    return next(error);
   }
 }
 

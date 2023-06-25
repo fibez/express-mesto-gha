@@ -1,63 +1,76 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const {
   isFieldEmpty,
 } = require('../utils/validation');
-const {
-  STATUS_BAD_REQUEST,
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
-} = require('../utils/constants');
 
-async function getAllUsers(req, res) {
+const BadRequestError = require('../utils/errors/BadRequest');
+const ConflictError = require('../utils/errors/Conflict');
+const NotFoundError = require('../utils/errors/NotFound');
+const UnauthorizedError = require('../utils/errors/Unauthorized');
+
+async function getAllUsers(req, res, next) {
   try {
     const users = await User.find();
 
     return res.json(users);
   } catch (error) {
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при получении пользователей' });
+    return next(error);
   }
 }
 
-async function getuserBuId(req, res) {
+async function getuserBuId(req, res, next) {
   try {
     const user = await User.findById(req.params.id);
+
     if (!user) {
-      return res.status(STATUS_NOT_FOUND).json({ message: 'Пользователь не найден' });
+      throw new NotFoundError('Пользователь не найден');
     }
     return res.json(user);
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Некорректный идентификатор пользователя' });
+      return next(new BadRequestError('Некорректный идентификатор пользователя'));
     }
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при получении пользователя' });
+    return next(error);
   }
 }
 
-async function createUser(req, res) {
+async function createUser(req, res, next) {
   try {
-    const { name, about, avatar } = req.body;
+    const {
+      name, about, avatar, email, password,
+    } = req.body;
 
-    if (isFieldEmpty({ name, about, avatar })) {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Одно из обязательных полей не заполнено' });
+    if (isFieldEmpty({
+      email, password,
+    })) {
+      throw new BadRequestError('Одно из обязательных полей не заполнено');
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       name,
       about,
       avatar,
+      email,
+      password: hashedPassword,
     });
 
     return res.json(newUser);
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Переданы некорректные данные' });
+    if (error.code === 11000) {
+      return next(new ConflictError('Пользователь с такими данными уже существует'));
     }
-
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при создании пользователя' });
+    if (error.name === 'ValidationError') {
+      return next(new BadRequestError('Переданы некорректные данные'));
+    }
+    return next(error);
   }
 }
 
-async function updateProfile(req, res) {
+async function updateProfile(req, res, next) {
   try {
     const { name, about } = req.body;
     const userId = req.user._id;
@@ -68,24 +81,23 @@ async function updateProfile(req, res) {
     );
 
     if (isFieldEmpty({ name, about })) {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Одно из обязательных полей не заполнено' });
+      throw next(new BadRequestError('Одно из обязательных полей не заполнено'));
     }
 
     if (!updatedUser) {
-      return res.status(STATUS_NOT_FOUND).json({ message: 'Пользователь не найден' });
+      throw next(new NotFoundError('Пользователь не найден'));
     }
 
     return res.json(updatedUser);
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Переданы некорректные данные' });
+      return next(new BadRequestError('Переданы некорректные данные'));
     }
-
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при обновлении профиля' });
+    return next(error);
   }
 }
 
-async function updateAvatar(req, res) {
+async function updateAvatar(req, res, next) {
   try {
     const { avatar } = req.body;
     const userId = req.user._id;
@@ -96,19 +108,48 @@ async function updateAvatar(req, res) {
     );
 
     if (isFieldEmpty({ avatar })) {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Одно из обязательных полей не заполнено' });
+      throw new BadRequestError('Одно из обязательных полей не заполнено');
     }
 
     if (!updatedUser) {
-      return res.status(STATUS_NOT_FOUND).json({ message: 'Пользователь не найден' });
+      throw new NotFoundError('Пользователь не найден');
     }
 
     return res.json(updatedUser);
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(STATUS_BAD_REQUEST).json({ message: 'Переданы некорректные данные' });
+      return next(new BadRequestError('Переданы некорректные данные'));
     }
-    return res.status(STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Произошла ошибка при обновлении аватара' });
+    return next(error);
+  }
+}
+
+async function login(req, res, next) {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      throw new UnauthorizedError('Неправильная почта или пароль');
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      throw new UnauthorizedError('Неправильная почта или пароль');
+    }
+
+    const token = jwt.sign({ _id: user._id }, 'secret_key', { expiresIn: '7d' });
+
+    res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 });
+
+    return res.json({ token });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return next(BadRequestError('Некорректные данные при авторизации'));
+    }
+    return next(error);
   }
 }
 
@@ -118,4 +159,5 @@ module.exports = {
   createUser,
   updateProfile,
   updateAvatar,
+  login,
 };
