@@ -3,19 +3,19 @@ const ConflictError = require('./Conflict');
 const NotFoundError = require('./NotFound');
 const UnauthorizedError = require('./Unauthorized');
 
-function errorHandler(err, req, res) {
+function errorHandler(err, req, res, next) {
   let statusCode = 500;
-  let message = 'Произошла ошибка на сервере';
+  let errorMessage = 'Произошла ошибка на сервере';
 
   if (err instanceof NotFoundError
       || err instanceof BadRequestError
       || err instanceof ConflictError
       || err instanceof UnauthorizedError) {
     statusCode = err.statusCode;
-    message = err.message;
+    errorMessage = err.message;
   }
-
-  res.status(statusCode).json({ error: message });
+  res.status(statusCode).json({ message: errorMessage });
+  next();
 }
 
 module.exports = {

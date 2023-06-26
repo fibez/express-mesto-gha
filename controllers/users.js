@@ -147,7 +147,7 @@ async function login(req, res, next) {
     return res.json({ token });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return next(BadRequestError('Некорректные данные при авторизации'));
+      return next(new BadRequestError('Некорректные данные при авторизации'));
     }
     return next(error);
   }

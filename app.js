@@ -13,7 +13,7 @@ const {
   createUser,
   login,
 } = require('./controllers/users');
-const { errorHandler } = require('./utils/errors/ErrorsHandler');
+const { errorHandler } = require('./utils/errors/ErrorHandler');
 
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
@@ -40,8 +40,9 @@ app.post('/signin', celebrate({
     password: Joi.string().required(),
   }),
 }), login);
-app.use(userRouter, errorHandler);
-app.use(cardRouter, errorHandler);
+app.use(userRouter);
+app.use(cardRouter);
+app.use(errorHandler);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Неправильный путь' });
