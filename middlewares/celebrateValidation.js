@@ -20,7 +20,7 @@ const userSchemaSigninValidator = celebrate({
 
 const userIdValidator = celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().hex().length(24)
+    id: Joi.string().hex().length(24)
       .required(),
   }),
 });
