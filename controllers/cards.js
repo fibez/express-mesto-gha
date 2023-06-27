@@ -3,6 +3,7 @@ const Card = require('../models/card');
 const BadRequestError = require('../utils/errors/BadRequest');
 const NotFoundError = require('../utils/errors/NotFound');
 const UnauthorizedError = require('../utils/errors/Unauthorized');
+const ForbiddenError = require('../utils/errors/Forbidden');
 
 async function getAllCards(req, res, next) {
   try {
@@ -48,7 +49,7 @@ async function deleteCard(req, res, next) {
     }
 
     if (card.owner.toString() !== userId) {
-      throw new UnauthorizedError('У вас нет прав для удаления этой карточки');
+      throw new ForbiddenError('У вас нет прав для удаления этой карточки');
     }
 
     await Card.deleteOne({ _id: cardId });

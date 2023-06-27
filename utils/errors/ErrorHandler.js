@@ -2,6 +2,7 @@ const BadRequestError = require('./BadRequest');
 const ConflictError = require('./Conflict');
 const NotFoundError = require('./NotFound');
 const UnauthorizedError = require('./Unauthorized');
+const ForbiddenError = require('./Forbidden');
 
 function errorHandler(err, req, res, next) {
   let statusCode = 500;
@@ -10,7 +11,8 @@ function errorHandler(err, req, res, next) {
   if (err instanceof NotFoundError
       || err instanceof BadRequestError
       || err instanceof ConflictError
-      || err instanceof UnauthorizedError) {
+      || err instanceof UnauthorizedError
+      || err instanceof ForbiddenError) {
     statusCode = err.statusCode;
     errorMessage = err.message;
   }
