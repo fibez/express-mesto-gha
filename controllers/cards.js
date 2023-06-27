@@ -2,7 +2,6 @@ const Card = require('../models/card');
 
 const BadRequestError = require('../utils/errors/BadRequest');
 const NotFoundError = require('../utils/errors/NotFound');
-const UnauthorizedError = require('../utils/errors/Unauthorized');
 const ForbiddenError = require('../utils/errors/Forbidden');
 
 async function getAllCards(req, res, next) {
