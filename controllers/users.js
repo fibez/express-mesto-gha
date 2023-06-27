@@ -58,7 +58,15 @@ async function createUser(req, res, next) {
       password: hashedPassword,
     });
 
-    return res.json(newUser);
+    const responseData = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      about: newUser.about,
+      avatar: newUser.avatar,
+    };
+
+    return res.json(responseData);
   } catch (error) {
     if (error.code === 11000) {
       return next(new ConflictError('Пользователь с такими данными уже существует'));
@@ -153,7 +161,23 @@ async function login(req, res, next) {
   }
 }
 
+async function getCurrentUser(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+
+    return res.json(user);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
+  getCurrentUser,
   getAllUsers,
   getuserBuId,
   createUser,
