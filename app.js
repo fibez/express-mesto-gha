@@ -20,6 +20,7 @@ const { errorHandler } = require('./utils/errors/ErrorHandler');
 
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
+const NotFoundError = require('./utils/errors/NotFound');
 
 app.use(express.json());
 
@@ -32,11 +33,9 @@ app.post('/signup', userSchemaSignupValidator, createUser);
 app.post('/signin', userSchemaSigninValidator, login);
 app.use(userRouter);
 app.use(cardRouter);
+app.use((req, res, next) => next(new NotFoundError('Неправильный путь')));
+
 app.use(errors());
 app.use(errorHandler);
-
-app.use((req, res) => {
-  res.status(404).json({ message: 'Неправильный путь' });
-});
 
 app.listen(PORT, () => {});

@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
+    validate: {
+      validator: (value) => validator.isURL(value),
+      message: 'Некорректная ссылка на аватар',
+    },
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
   },
   email: {
@@ -34,4 +38,4 @@ const userSchema = new mongoose.Schema({
   },
 }, { versionKey: false });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('user', userSchema);

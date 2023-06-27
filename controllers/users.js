@@ -1,9 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/user');
-const {
-  isFieldEmpty,
-} = require('../utils/validation');
+const user = require('../models/user');
 
 const BadRequestError = require('../utils/errors/BadRequest');
 const ConflictError = require('../utils/errors/Conflict');
@@ -12,7 +9,7 @@ const UnauthorizedError = require('../utils/errors/Unauthorized');
 
 async function getAllUsers(req, res, next) {
   try {
-    const users = await User.find();
+    const users = await user.find();
 
     return res.json(users);
   } catch (error) {
@@ -22,12 +19,12 @@ async function getAllUsers(req, res, next) {
 
 async function getuserBuId(req, res, next) {
   try {
-    const user = await User.findById(req.params.id);
+    const foundUser = await user.findById(req.params.id);
 
-    if (!user) {
+    if (!foundUser) {
       throw new NotFoundError('Пользователь не найден');
     }
-    return res.json(user);
+    return res.json(foundUser);
   } catch (error) {
     if (error.name === 'CastError') {
       return next(new BadRequestError('Некорректный идентификатор пользователя'));
@@ -42,15 +39,9 @@ async function createUser(req, res, next) {
       name, about, avatar, email, password,
     } = req.body;
 
-    if (isFieldEmpty({
-      email, password,
-    })) {
-      throw new BadRequestError('Одно из обязательных полей не заполнено');
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({
+    const newUser = await user.create({
       name,
       about,
       avatar,
@@ -66,7 +57,7 @@ async function createUser(req, res, next) {
       avatar: newUser.avatar,
     };
 
-    return res.json(responseData);
+    return res.status(201).json(responseData);
   } catch (error) {
     if (error.code === 11000) {
       return next(new ConflictError('Пользователь с такими данными уже существует'));
@@ -82,15 +73,11 @@ async function updateProfile(req, res, next) {
   try {
     const { name, about } = req.body;
     const userId = req.user._id;
-    const updatedUser = await User.findByIdAndUpdate(
+    const updatedUser = await user.findByIdAndUpdate(
       userId,
       { name, about },
       { new: true, runValidators: true },
     );
-
-    if (isFieldEmpty({ name, about })) {
-      throw next(new BadRequestError('Одно из обязательных полей не заполнено'));
-    }
 
     if (!updatedUser) {
       throw next(new NotFoundError('Пользователь не найден'));
@@ -109,15 +96,11 @@ async function updateAvatar(req, res, next) {
   try {
     const { avatar } = req.body;
     const userId = req.user._id;
-    const updatedUser = await User.findByIdAndUpdate(
+    const updatedUser = await user.findByIdAndUpdate(
       userId,
       { avatar },
       { new: true, runValidators: true },
     );
-
-    if (isFieldEmpty({ avatar })) {
-      throw new BadRequestError('Одно из обязательных полей не заполнено');
-    }
 
     if (!updatedUser) {
       throw new NotFoundError('Пользователь не найден');
@@ -136,9 +119,9 @@ async function login(req, res, next) {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email }).select('+password');
+    const foundUser = await user.findOne({ email }).select('+password');
 
-    if (!user) {
+    if (!foundUser) {
       throw new UnauthorizedError('Неправильная почта или пароль');
     }
 
@@ -164,13 +147,13 @@ async function login(req, res, next) {
 async function getCurrentUser(req, res, next) {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId);
+    const foundUser = await user.findById(userId);
 
-    if (!user) {
+    if (!foundUser) {
       throw new NotFoundError('Пользователь не найден');
     }
 
-    return res.json(user);
+    return res.json(foundUser);
   } catch (error) {
     return next(error);
   }
