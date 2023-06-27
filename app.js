@@ -7,6 +7,7 @@ const { PORT = 3000 } = process.env;
 
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi } = require('celebrate');
+const { errors } = require('celebrate');
 const url = require('./utils/urlPattern');
 
 const {
@@ -42,6 +43,7 @@ app.post('/signin', celebrate({
 }), login);
 app.use(userRouter);
 app.use(cardRouter);
+app.use(errors())
 app.use(errorHandler);
 
 app.use((req, res) => {
