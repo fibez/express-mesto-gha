@@ -31,11 +31,11 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 app.use(cookieParser());
 app.post('/signup', userSchemaSignupValidator, createUser);
 app.post('/signin', userSchemaSigninValidator, login);
-app.use(userRouter);
+app.use('/users', userRouter);
 app.use(cardRouter);
 app.use((req, res, next) => next(new NotFoundError('Неправильный путь')));
 
 app.use(errors());
 app.use(errorHandler);
 
-app.listen(PORT, () => {})
+app.listen(PORT, () => {});

@@ -131,11 +131,11 @@ async function login(req, res, next) {
       throw new UnauthorizedError('Неправильная почта или пароль');
     }
 
-    const token = jwt.sign({ _id: user._id }, 'secret_key', { expiresIn: '7d' });
+    const token = jwt.sign({ _id: foundUser._id }, 'secret_key', { expiresIn: '7d' });
 
     res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 });
 
-    return res.json({ token });
+    return res.status(200).json({ message: 'Вы успешно авторизованы' });
   } catch (error) {
     if (error.name === 'ValidationError') {
       return next(new BadRequestError('Некорректные данные при авторизации'));
@@ -148,7 +148,6 @@ async function getCurrentUser(req, res, next) {
   try {
     const userId = req.user._id;
     const foundUser = await user.findById(userId);
-
     if (!foundUser) {
       throw new NotFoundError('Пользователь не найден');
     }
