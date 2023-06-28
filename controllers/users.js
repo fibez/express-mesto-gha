@@ -125,7 +125,7 @@ async function login(req, res, next) {
       throw new UnauthorizedError('Неправильная почта или пароль');
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(password, foundUser.password);
 
     if (!passwordMatch) {
       throw new UnauthorizedError('Неправильная почта или пароль');

@@ -38,4 +38,4 @@ app.use((req, res, next) => next(new NotFoundError('Неправильный п�
 app.use(errors());
 app.use(errorHandler);
 
-app.listen(PORT, () => {});
+app.listen(PORT, () => {})
